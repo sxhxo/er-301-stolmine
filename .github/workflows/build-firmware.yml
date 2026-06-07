@@ -1,0 +1,131 @@
+name: Build Firmware
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch:  # 手動実行も可能
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq \
+            build-essential \
+            git \
+            wget \
+            unzip \
+            python3 \
+            lua5.4 \
+            swig \
+            zip
+
+      - name: Install arm-none-eabi-gcc (xpack)
+        run: |
+          wget -q -O /tmp/xpack-gcc.tar.gz \
+            https://github.com/xpack-dev-tools/arm-none-eabi-gcc-xpack/releases/download/v15.2.1-1.1/xpack-arm-none-eabi-gcc-15.2.1-1.1-linux-x64.tar.gz
+          tar xzf /tmp/xpack-gcc.tar.gz -C /tmp
+          TOOLCHAIN_DIR=$(ls -d /tmp/xpack-arm-none-eabi-gcc-*)
+          mkdir -p ~/ti
+          ln -s $TOOLCHAIN_DIR ~/ti/gcc-arm-none-eabi-4_9-2015q3
+          echo "$TOOLCHAIN_DIR/bin" >> $GITHUB_PATH
+
+      - name: Verify GCC
+        run: arm-none-eabi-gcc --version
+
+      - name: Install XDCtools
+        run: |
+          wget -q -O /tmp/xdctools.zip \
+            https://software-dl.ti.com/dsps/dsps_public_sw/sdo_sb/targetcontent/rtsc/3_32_01_22/exports/xdccore/xdctools_3_32_01_22_core_linux.zip
+          unzip -q /tmp/xdctools.zip -d ~/ti/
+          ls ~/ti/xdctools_3_32_01_22_core/
+
+      - name: Install BIOS SDK
+        run: |
+          wget -q -O /tmp/bios.bin \
+            https://software-dl.ti.com/dsps/dsps_public_sw/sdo_sb/targetcontent/bios/sysbios/6_46_05_55/exports/bios_setuplinux_6_46_05_55.bin
+          chmod +x /tmp/bios.bin
+          # BitRock installer: extract with --mode unattended
+          # Actually we need to extract packages from the .bin
+          # The .bin has a payload at the end
+          # Extract with the built-in --tar option if possible
+          /tmp/bios.bin --mode unattended --prefix /tmp/bios-install 2>&1 || true
+          # If that fails, try extracting the tar payload directly
+          if [ ! -d ~/ti/bios_6_46_05_55 ]; then
+            # Find and extract tar.gz payload from .bin
+            python3 -c "
+import re
+with open('/tmp/bios.bin', 'rb') as f:
+    data = f.read()
+# Find tar.gz magic bytes at end of file
+idx = data.rfind(b'\x1f\x8b\x08')
+if idx > 0:
+    import tarfile, os
+    os.makedirs('$HOME/ti/bios_6_46_05_55', exist_ok=True)
+    with open('/tmp/bios_payload.tar.gz', 'wb') as out:
+        out.write(data[idx:])
+    with tarfile.open('/tmp/bios_payload.tar.gz', 'r:gz') as tar:
+        tar.extractall('$HOME/ti/bios_6_46_05_55')
+    print('Extracted BIOS from payload')
+else:
+    print('No gzip payload found, trying alternate method')
+"
+          fi
+          ls ~/ti/bios_6_46_05_55/ 2>/dev/null | head -5
+
+      - name: Install PDK
+        run: |
+          wget -q -O /tmp/pdk.bin \
+            https://software-dl.ti.com/dsps/dsps_public_sw/sdo_sb/targetcontent/pdk/am335x/1_0_8/exports/pdk_am335x_setuplinux_1_0_8.bin 2>/dev/null || \
+          wget -q -O /tmp/pdk.bin \
+            https://software-dl.ti.com/dsps/dsps_public_sw/sdo_sb/targetcontent/pdk/pdk_am335x_1_0_8/exports/pdk_am335x_setuplinux_1_0_8.bin 2>/dev/null || \
+          echo "PDK download failed, will try alternative URL"
+          # If PDK download fails, create dummy directory
+          mkdir -p ~/ti/pdk_am335x_1_0_8/packages
+          echo "PDK directory created"
+
+      - name: Set up swig symlink
+        run: |
+          mkdir -p ~/.local
+          ln -sf /usr/bin/swig ~/.local/swig-4.2.1/bin/swig 2>/dev/null || \
+            ln -sf $(which swig) ~/.local/swig-4.2.1/bin/swig 2>/dev/null || true
+
+      - name: Build firmware
+        run: |
+          export TI_INSTALL_DIR=$HOME/ti
+          export PATH=$HOME/ti/gcc-arm-none-eabi-4_9-2015q3/bin:$HOME/.local/swig-4.2.1/bin:$PATH
+          # Verify tools
+          arm-none-eabi-gcc --version | head -1
+          ls -la $HOME/ti/xdctools_3_32_01_22_core/xs
+          $HOME/ti/xdctools_3_32_01_22_core/xs --version
+          swig -version | head -1
+          # Build
+          cd $GITHUB_WORKSPACE
+          make firmware 2>&1
+
+      - name: Upload firmware artifacts
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: er-301-firmware
+          path: |
+            release/am335x/er-301-v*.zip
+          compression-level: 0
+
+      - name: Upload individual packages
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: er-301-packages
+          path: |
+            release/am335x/mods/*.pkg
+            release/am335x/app/kernel.bin
+          compression-level: 0

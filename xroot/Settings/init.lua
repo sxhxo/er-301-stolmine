@@ -84,6 +84,7 @@ local defaults = {
       "perlin",
       "voronoi",
       "doom",
+      "liquidlight",
       "cycle"
     },
     onSet = function(value)

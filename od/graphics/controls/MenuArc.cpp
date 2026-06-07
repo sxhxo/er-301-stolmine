@@ -8,8 +8,8 @@
 namespace od
 {
 
-    const float arcOffsets[] = {0, sin(M_PI * 0.167), sin(M_PI * 0.333), 1, sin(M_PI * 0.333),
-                                sin(M_PI * 0.167), 0};
+    const float arcOffsets[] = {0.0f, sinf((float)(M_PI * 0.167)), sinf((float)(M_PI * 0.333)), 1.0f, sinf((float)(M_PI * 0.333)),
+                               sinf((float)(M_PI * 0.167)), 0.0f};
 
     static inline float interpolateArc(int i, float w)
     {

@@ -11,6 +11,7 @@
 #include <od/graphics/screensavers/Perlin.h>
 #include <od/graphics/screensavers/Voronoi.h>
 #include <od/graphics/screensavers/Doom.h>
+#include <od/graphics/screensavers/LiquidLight.h>
 #include <od/extras/Profiler.h>
 #include <od/ui/ChannelLEDs.h>
 #include <od/AudioThread.h>
@@ -52,7 +53,7 @@ namespace od
     bool cycleMode = false;
     bool screenSaverActive = false;
     std::string currentScreenSaverName = "bubbles";
-    bool cycleSeen[16] = {}; // must be >= cycleListSize
+    bool cycleSeen[20] = {}; // must be >= cycleListSize
     int cycleSeenCount = 0;
   };
 
@@ -114,7 +115,7 @@ namespace od
   }
 
   static const char *cycleList[] = {
-      "2lines", "grid", "bubbles", "maze", "forest", "snow", "rain", "perlin", "voronoi"};
+      "2lines", "grid", "bubbles", "maze", "forest", "snow", "rain", "perlin", "voronoi", "liquidlight"};
   static const int cycleListSize = sizeof(cycleList) / sizeof(cycleList[0]);
 
   void UIThread::setScreenSaver(const char *name)
@@ -161,6 +162,10 @@ namespace od
     else if (tmp == "doom")
     {
       local->screenSaver = new Doom();
+    }
+    else if (tmp == "liquidlight")
+    {
+      local->screenSaver = new LiquidLight();
     }
     else
     {

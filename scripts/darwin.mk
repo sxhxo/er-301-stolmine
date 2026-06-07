@@ -1,23 +1,29 @@
 # Build Tools for OSX
-
-# If the processor arch is arm (aka Apple M1) use gcc@11 instead. At the moment
-# there isn't a gcc@10 build available for the M1 chip and even worse the
-# gcc@11 install from homebrew can't seem to find certain header files...
 #
-# For now this will have to do, may want to update this in the future if
-# eventually they can use the same version.
+# Use the system clang (macOS default) instead of Homebrew gcc.
+# Note: the stock firmware uses gcc-10; clang may produce different codegen.
 GCC_VERSION = 10
-ifeq ($(shell uname -p),arm)
-  GCC_VERSION = 15
+
+# Detect available compiler
+GCC_EXISTS := $(shell which gcc-$(GCC_VERSION) 2>/dev/null || echo 0)
+CLANG_EXISTS := $(shell which clang++ 2>/dev/null || which c++ 2>/dev/null || echo 0)
+
+ifeq ($(CLANG_EXISTS),0)
+  # Fallback: use Homebrew gcc
+  CC := gcc-$(GCC_VERSION) -fdiagnostics-color -fmax-errors=5
+  CPP := g++-$(GCC_VERSION) -fdiagnostics-color -fmax-errors=5
+  AR := gcc-ar-$(GCC_VERSION)
+else
+  # Use system clang
+  CC := clang -fdiagnostics-color -fmax-errors=5
+  CPP := clang++ -fdiagnostics-color -fmax-errors=5
+  AR := ar
 endif
 
-CC := gcc-$(GCC_VERSION) -fdiagnostics-color -fmax-errors=5
-CPP := g++-$(GCC_VERSION) -fdiagnostics-color -fmax-errors=5
 OBJCOPY := objcopy
 OBJDUMP := objdump
 ADDR2LINE := addr2line
 LD := ld
-AR := gcc-ar-$(GCC_VERSION)
 SIZE := size
 STRIP := strip
 READELF := readelf
