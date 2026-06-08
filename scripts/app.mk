@@ -72,7 +72,7 @@ CFLAGS += $(sysbios_cflags)
 CFLAGS += -DFIRMWARE_VERSION=\"$(FIRMWARE_VERSION)\"
 CFLAGS += -DBUILD_PROFILE=\"$(PROFILE)\"
 CFLAGS += -DDOOMGENERIC_RESX=320 -DDOOMGENERIC_RESY=200
-LFLAGS = $(sysbios_lflags) -Wl,--gc-sections -lm -lc -lnosys -u _printf_float 
+LFLAGS = $(sysbios_lflags) -Wl,--gc-sections -lm -lc -u _printf_float
 
 all: $(out_dir)/kernel.bin $(exports)
 
