@@ -60,24 +60,21 @@ jobs:
           /tmp/bios.bin --mode unattended --prefix /tmp/bios-install 2>&1 || true
           # If that fails, try extracting the tar payload directly
           if [ ! -d ~/ti/bios_6_46_05_55 ]; then
-            # Find and extract tar.gz payload from .bin
-            python3 -c "
-import re
+            python3 << 'PYEOF'
+import re, tarfile, os
 with open('/tmp/bios.bin', 'rb') as f:
     data = f.read()
-# Find tar.gz magic bytes at end of file
 idx = data.rfind(b'\x1f\x8b\x08')
 if idx > 0:
-    import tarfile, os
-    os.makedirs('$HOME/ti/bios_6_46_05_55', exist_ok=True)
+    os.makedirs(os.path.expanduser('~/ti/bios_6_46_05_55'), exist_ok=True)
     with open('/tmp/bios_payload.tar.gz', 'wb') as out:
         out.write(data[idx:])
     with tarfile.open('/tmp/bios_payload.tar.gz', 'r:gz') as tar:
-        tar.extractall('$HOME/ti/bios_6_46_05_55')
+        tar.extractall(os.path.expanduser('~/ti/bios_6_46_05_55'))
     print('Extracted BIOS from payload')
 else:
     print('No gzip payload found, trying alternate method')
-"
+PYEOF
           fi
           ls ~/ti/bios_6_46_05_55/ 2>/dev/null | head -5
 
