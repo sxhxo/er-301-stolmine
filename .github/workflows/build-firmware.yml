@@ -55,21 +55,7 @@ jobs:
           chmod +x /tmp/bios.bin
           /tmp/bios.bin --mode unattended --prefix /tmp/bios-install 2>&1 || true
           if [ ! -d ~/ti/bios_6_46_05_55 ]; then
-            python3 -c '
-import re, tarfile, os
-with open("/tmp/bios.bin", "rb") as f:
-    data = f.read()
-idx = data.rfind(b"\x1f\x8b\x08")
-if idx > 0:
-    os.makedirs(os.path.expanduser("~/ti/bios_6_46_05_55"), exist_ok=True)
-    with open("/tmp/bios_payload.tar.gz", "wb") as out:
-        out.write(data[idx:])
-    with tarfile.open("/tmp/bios_payload.tar.gz", "r:gz") as tar:
-        tar.extractall(os.path.expanduser("~/ti/bios_6_46_05_55"))
-    print("Extracted BIOS from payload")
-else:
-    print("No gzip payload found")
-'
+            python3 /tmp/extract_bios.py
           fi
           ls ~/ti/bios_6_46_05_55/ 2>/dev/null | head -5
 
