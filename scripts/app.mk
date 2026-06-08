@@ -11,6 +11,7 @@ excluded_symbols_file := $(program_dir)/excluded.sym
 extra_symbols_file := $(program_dir)/extra.sym
 
 src_dirs := $(program_dir) $(hal_dir) $(arch_dir)/$(ARCH)/hal $(od_dir) $(ti_dir) $(libs_dir)/doomgeneric
+objects_nosys := $(out_dir)/$(program_name)/nosys_stubs.o
 
 includes += $(lua_dir) $(ne10_dir)/inc $(lodepng_dir) $(miniz_dir) $(libs_dir)/doomgeneric
 
@@ -65,6 +66,7 @@ exports += $(libs_build_dir)/gcc-libstdc++.sym
 # Add ramdisk object and symbol table after exports are calculated.
 objects += $(out_dir)/$(program_name)/xroot.o
 objects += $(out_dir)/$(program_name)/symtab.o
+objects += $(objects_nosys)
 
 CFLAGS += $(sysbios_cflags)
 CFLAGS += -DFIRMWARE_VERSION=\"$(FIRMWARE_VERSION)\"
