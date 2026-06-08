@@ -32,3 +32,17 @@ char *getcwd(char *buf, size_t size)
     errno = ENOSYS;
     return NULL;
 }
+
+int chdir(const char *path)
+{
+    (void)path;
+    errno = ENOSYS;
+    return -1;
+}
+
+int mkdir(const char *path, mode_t mode)
+{
+    (void)path; (void)mode;
+    errno = ENOSYS;
+    return -1;
+}
