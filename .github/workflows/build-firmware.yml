@@ -53,28 +53,23 @@ jobs:
           wget -q -O /tmp/bios.bin \
             https://software-dl.ti.com/dsps/dsps_public_sw/sdo_sb/targetcontent/bios/sysbios/6_46_05_55/exports/bios_setuplinux_6_46_05_55.bin
           chmod +x /tmp/bios.bin
-          # BitRock installer: extract with --mode unattended
-          # Actually we need to extract packages from the .bin
-          # The .bin has a payload at the end
-          # Extract with the built-in --tar option if possible
           /tmp/bios.bin --mode unattended --prefix /tmp/bios-install 2>&1 || true
-          # If that fails, try extracting the tar payload directly
           if [ ! -d ~/ti/bios_6_46_05_55 ]; then
-            python3 << 'PYEOF'
+            python3 -c '
 import re, tarfile, os
-with open('/tmp/bios.bin', 'rb') as f:
+with open("/tmp/bios.bin", "rb") as f:
     data = f.read()
-idx = data.rfind(b'\x1f\x8b\x08')
+idx = data.rfind(b"\x1f\x8b\x08")
 if idx > 0:
-    os.makedirs(os.path.expanduser('~/ti/bios_6_46_05_55'), exist_ok=True)
-    with open('/tmp/bios_payload.tar.gz', 'wb') as out:
+    os.makedirs(os.path.expanduser("~/ti/bios_6_46_05_55"), exist_ok=True)
+    with open("/tmp/bios_payload.tar.gz", "wb") as out:
         out.write(data[idx:])
-    with tarfile.open('/tmp/bios_payload.tar.gz', 'r:gz') as tar:
-        tar.extractall(os.path.expanduser('~/ti/bios_6_46_05_55'))
-    print('Extracted BIOS from payload')
+    with tarfile.open("/tmp/bios_payload.tar.gz", "r:gz") as tar:
+        tar.extractall(os.path.expanduser("~/ti/bios_6_46_05_55"))
+    print("Extracted BIOS from payload")
 else:
-    print('No gzip payload found, trying alternate method')
-PYEOF
+    print("No gzip payload found")
+'
           fi
           ls ~/ti/bios_6_46_05_55/ 2>/dev/null | head -5
 
