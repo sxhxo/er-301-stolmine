@@ -60,17 +60,10 @@ jobs:
           /tmp/bios.bin --mode unattended --prefix /tmp/bios-install 2>&1 && echo "INSTALLER_OK" || echo "INSTALLER_FAILED"
           # If unattended fails, check if it's a tar.gz with a leading script
           if [ ! -d ~/ti/bios_6_46_05_55 ]; then
-            # Try extracting the embedded tar.gz by searching for the gzip magic offset
-            TAR_OFFSET=$(python3 -c '
-with open("/tmp/bios.bin", "rb") as f:
-    data = f.read()
-# Search for gzip magic at the very end
-idx = max(data.rfind(b"\x1f\x8b\x08"), data.rfind(b"\x1f\x8b\x00"))
-print(idx)')
+            TAR_OFFSET=$(python3 scripts/find_bios_offset.py)
             if [ "$TAR_OFFSET" -gt 0 ] 2>/dev/null; then
               tail -c +$((TAR_OFFSET + 1)) /tmp/bios.bin | tar xzf - -C ~/ti/ 2>&1 && echo "EXTRACT_OK" || echo "EXTRACT_FAILED"
             else
-              # Try using 7z (p7zip) as fallback
               sudo apt-get install -y -qq p7zip-full 2>&1 || true
               7z x /tmp/bios.bin -o/tmp/bios-7z 2>&1 | tail -5
               find /tmp/bios-7z -maxdepth 3 -name "*.tar*" -exec tar xzf {} -C ~/ti/ \; 2>/dev/null || true
