@@ -11,7 +11,6 @@ excluded_symbols_file := $(program_dir)/excluded.sym
 extra_symbols_file := $(program_dir)/extra.sym
 
 src_dirs := $(program_dir) $(hal_dir) $(arch_dir)/$(ARCH)/hal $(od_dir) $(ti_dir) $(libs_dir)/doomgeneric
-objects_nostubs := $(out_dir)/$(program_name)/nosys_stubs.o
 
 includes += $(lua_dir) $(ne10_dir)/inc $(lodepng_dir) $(miniz_dir) $(libs_dir)/doomgeneric
 
@@ -66,13 +65,12 @@ exports += $(libs_build_dir)/gcc-libstdc++.sym
 # Add ramdisk object and symbol table after exports are calculated.
 objects += $(out_dir)/$(program_name)/xroot.o
 objects += $(out_dir)/$(program_name)/symtab.o
-objects += $(objects_nostubs)
 
 CFLAGS += $(sysbios_cflags)
 CFLAGS += -DFIRMWARE_VERSION=\"$(FIRMWARE_VERSION)\"
 CFLAGS += -DBUILD_PROFILE=\"$(PROFILE)\"
 CFLAGS += -DDOOMGENERIC_RESX=320 -DDOOMGENERIC_RESY=200
-LFLAGS = $(sysbios_lflags) -Wl,--gc-sections -lm -lc -u _printf_float
+LFLAGS = $(sysbios_lflags) -Wl,--gc-sections -Wl,--start-group -lm -lc -lnosys -u _printf_float -Wl,--end-group
 
 all: $(out_dir)/kernel.bin $(exports)
 
