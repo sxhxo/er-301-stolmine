@@ -15,8 +15,8 @@ ifndef ARCH
   endif
 endif
 
-GIT_DESCRIBE := $(shell git describe --match v*.*.*-* --tags --abbrev=0)
-COMMIT_COUNT := $(shell git rev-list --count $(GIT_DESCRIBE)..HEAD)
+GIT_DESCRIBE := $(shell git describe --match v*.*.*-* --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+COMMIT_COUNT := $(shell git rev-list --count HEAD --first-parent 2>/dev/null || echo "0")
 
 ifeq ($(COMMIT_COUNT),0)
 	FIRMWARE_VERSION = $(GIT_DESCRIBE:v%=%)

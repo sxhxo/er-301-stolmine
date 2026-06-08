@@ -93,9 +93,10 @@ jobs:
 
       - name: Set up swig symlink
         run: |
-          mkdir -p ~/.local
-          ln -sf /usr/bin/swig ~/.local/swig-4.2.1/bin/swig 2>/dev/null || \
-            ln -sf $(which swig) ~/.local/swig-4.2.1/bin/swig 2>/dev/null || true
+          mkdir -p ~/.local/swig-4.2.1/bin
+          ln -sf /usr/bin/swig ~/.local/swig-4.2.1/bin/swig || \
+            ln -sf $(which swig) ~/.local/swig-4.2.1/bin/swig
+          ls -la ~/.local/swig-4.2.1/bin/swig
 
       - name: Build firmware
         run: |
