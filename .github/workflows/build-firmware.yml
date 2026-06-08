@@ -80,16 +80,12 @@ jobs:
           fi
           ls ~/ti/bios_6_46_05_55/ 2>/dev/null | head -10 || echo "BIOS_DIR_NOT_FOUND"
 
-      - name: Install PDK
+      - name: Set up PDK (tiimage replaced by Python)
         run: |
-          wget -q -O /tmp/pdk.bin \
-            https://software-dl.ti.com/dsps/dsps_public_sw/sdo_sb/targetcontent/pdk/am335x/1_0_8/exports/pdk_am335x_setuplinux_1_0_8.bin 2>/dev/null || \
-          wget -q -O /tmp/pdk.bin \
-            https://software-dl.ti.com/dsps/dsps_public_sw/sdo_sb/targetcontent/pdk/pdk_am335x_1_0_8/exports/pdk_am335x_setuplinux_1_0_8.bin 2>/dev/null || \
-          echo "PDK download failed, will try alternative URL"
-          # If PDK download fails, create dummy directory
+          # PDK is no longer needed since we use scripts/tiimage.py instead.
+          # Create the expected directory structure for compatibility.
           mkdir -p ~/ti/pdk_am335x_1_0_8/packages
-          echo "PDK directory created"
+          echo "PDK stub directory created (tiimage is Python-based)"
 
       - name: Set up swig symlink
         run: |
