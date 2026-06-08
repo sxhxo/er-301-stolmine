@@ -1,48 +1,29 @@
 /*
  * Stub implementations of POSIX syscalls needed by xpack GCC 12.3.1's
- * libstdc++ filesystem support (fs_ops.o).
+ * libstdc++ filesystem and threading support (fs_ops.o, thread.o).
  *
- * These are only referenced when the linker pulls in filesystem-related
- * object files from libstdc++ (due to some C++ header or inline using
- * std::filesystem internally).  The ER-301 firmware does not use the
- * filesystem library at runtime, so stubs returning -1/ENOSYS are safe.
+ * The ER-301 firmware runs bare-metal with no OS — these functions are
+ * never called at runtime; the linker only needs them to resolve
+ * references from libstdc++ internal objects that get pulled in.
+ *
+ * NOTE: chmod/chdir/mkdir/getcwd/pathconf are NOT provided here because
+ * -lnosys already provides them.  We only add what -lnosys doesn't cover.
+ * If -lnosys is not linked, uncomment the full set below.
  */
 
 #include <errno.h>
-#include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
 
-int chmod(const char *path, mode_t mode)
+/* Thread support: libstdc++ std::this_thread::__sleep_for */
+unsigned int sleep(unsigned int seconds)
 {
-    (void)path; (void)mode;
-    errno = ENOSYS;
-    return -1;
+    (void)seconds;
+    return 0;
 }
 
-long pathconf(const char *path, int name)
+int usleep(useconds_t usec)
 {
-    (void)path; (void)name;
-    errno = ENOSYS;
-    return -1;
-}
-
-char *getcwd(char *buf, size_t size)
-{
-    (void)buf; (void)size;
-    errno = ENOSYS;
-    return NULL;
-}
-
-int chdir(const char *path)
-{
-    (void)path;
-    errno = ENOSYS;
-    return -1;
-}
-
-int mkdir(const char *path, mode_t mode)
-{
-    (void)path; (void)mode;
-    errno = ENOSYS;
-    return -1;
+    (void)usec;
+    return 0;
 }
