@@ -53,14 +53,23 @@ jobs:
           wget -q -O /tmp/bios.bin \
             https://software-dl.ti.com/dsps/dsps_public_sw/sdo_sb/targetcontent/bios/sysbios/6_46_05_55/exports/bios_setuplinux_6_46_05_55.bin
           chmod +x /tmp/bios.bin
+          mkdir -p ~/ti/bios_6_46_05_55
+          # The BitRock installer needs a writable prefix with subdir structure.
+          # Try unattended mode. It may install to /tmp/bios-install.
           mkdir -p /tmp/bios-install
-          cd /tmp/bios-install
-          # BitRock installer: the .bin is a self-extracting archive.
-          # Try running it unattended
           /tmp/bios.bin --mode unattended --prefix /tmp/bios-install 2>&1 && echo "INSTALLER_OK" || echo "INSTALLER_FAILED"
-          # If unattended fails, check if it's a tar.gz with a leading script
-          if [ ! -d ~/ti/bios_6_46_05_55 ]; then
-            TAR_OFFSET=$(python3 scripts/find_bios_offset.py)
+          # Check if installer created the expected dir inside /tmp/bios-install
+          BIOS_SRC=$(find /tmp/bios-install -type d -name "bios_6_46_05_55" 2>/dev/null | head -1)
+          if [ -n "$BIOS_SRC" ]; then
+            echo "Found BIOS at $BIOS_SRC"
+            cp -r "$BIOS_SRC"/* ~/ti/bios_6_46_05_55/
+          elif [ -d /tmp/bios-install/packages ]; then
+            echo "BIOS packages found directly in /tmp/bios-install"
+            cp -r /tmp/bios-install/* ~/ti/bios_6_46_05_55/
+          else
+            # Fallback: try extracting tar.gz payload from the .bin
+            echo "Looking for embedded tar.gz within .bin installer"
+            TAR_OFFSET=$(python3 $GITHUB_WORKSPACE/scripts/find_bios_offset.py)
             if [ "$TAR_OFFSET" -gt 0 ] 2>/dev/null; then
               tail -c +$((TAR_OFFSET + 1)) /tmp/bios.bin | tar xzf - -C ~/ti/ 2>&1 && echo "EXTRACT_OK" || echo "EXTRACT_FAILED"
             else
@@ -69,7 +78,7 @@ jobs:
               find /tmp/bios-7z -maxdepth 3 -name "*.tar*" -exec tar xzf {} -C ~/ti/ \; 2>/dev/null || true
             fi
           fi
-          ls ~/ti/bios_6_46_05_55/ 2>/dev/null | head -5 || echo "BIOS_DIR_NOT_FOUND"
+          ls ~/ti/bios_6_46_05_55/ 2>/dev/null | head -10 || echo "BIOS_DIR_NOT_FOUND"
 
       - name: Install PDK
         run: |
