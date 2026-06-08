@@ -28,10 +28,10 @@ jobs:
             swig \
             zip
 
-      - name: Install arm-none-eabi-gcc (xpack)
+      - name: Install arm-none-eabi-gcc (xpack 12.3.1)
         run: |
           wget -q -O /tmp/xpack-gcc.tar.gz \
-            https://github.com/xpack-dev-tools/arm-none-eabi-gcc-xpack/releases/download/v15.2.1-1.1/xpack-arm-none-eabi-gcc-15.2.1-1.1-linux-x64.tar.gz
+            https://github.com/xpack-dev-tools/arm-none-eabi-gcc-xpack/releases/download/v12.3.1-1.2/xpack-arm-none-eabi-gcc-12.3.1-1.2-linux-x64.tar.gz
           tar xzf /tmp/xpack-gcc.tar.gz -C /tmp
           TOOLCHAIN_DIR=$(ls -d /tmp/xpack-arm-none-eabi-gcc-*)
           mkdir -p ~/ti
