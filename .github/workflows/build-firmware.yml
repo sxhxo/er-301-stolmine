@@ -55,7 +55,7 @@ jobs:
           chmod +x /tmp/bios.bin
           /tmp/bios.bin --mode unattended --prefix /tmp/bios-install 2>&1 || true
           if [ ! -d ~/ti/bios_6_46_05_55 ]; then
-            python3 /tmp/extract_bios.py
+            python3 scripts/extract_bios.py
           fi
           ls ~/ti/bios_6_46_05_55/ 2>/dev/null | head -5
 
