@@ -41,7 +41,18 @@ objects := $(addprefix $(out_dir)/,$(c_sources:%.c=%.o) $(cpp_sources:%.cpp=%.o)
 # Manually add objects for swig wrappers
 objects += $(out_dir)/od/glue/$(program_name)_swig.o
 
+# Find the correct gcc multilib directory for libstdc++.a / libgcc.a.
+# Try standard fpu dir first, fall back to the multilib that matches our flags.
 gcc_std_libs_dir = $(gcc_install_dir)/arm-none-eabi/lib/fpu
+ifeq ($(wildcard $(gcc_std_libs_dir)/libstdc++.a),)
+  # xpack and newer GCC use thumb/v7-a+fp/hard multilib layout
+  gcc_std_libs_dir = $(gcc_install_dir)/arm-none-eabi/lib/thumb/v7-a+fp/hard
+endif
+ifeq ($(wildcard $(gcc_std_libs_dir)/libstdc++.a),)
+  # Fallback: just use the base lib directory
+  gcc_std_libs_dir = $(gcc_install_dir)/arm-none-eabi/lib
+endif
+
 bios_std_libs_dir = $(bios_install_dir)/gnu/targets/arm/libs/install-native/arm-none-eabi/lib/fpu
 
 # Calculate exports based on objects added so far

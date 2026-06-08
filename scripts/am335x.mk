@@ -14,13 +14,34 @@ pdk_install_dir := $(TI_INSTALL_DIR)/pdk_am335x_1_0_8/packages
 uia_install_dir := 
 uniflash_install_dir := /home/clarkson/ti-other/uniflash_5.3.1
 
+# Detect GCC version from the toolchain itself.
+GCC_VER := $(shell $(gcc_install_dir)/bin/arm-none-eabi-gcc -dumpversion 2>/dev/null || echo "12.3.1")
+
+# Find the correct libgcc path (GCC multilib may use thumb/v7-a+fp/hard instead of fpu/)
+GCC_LIBGCC_DIR := $(gcc_install_dir)/lib/gcc/arm-none-eabi/$(GCC_VER)/fpu
+ifeq ($(wildcard $(GCC_LIBGCC_DIR)/libgcc.a),)
+  GCC_LIBGCC_DIR := $(gcc_install_dir)/lib/gcc/arm-none-eabi/$(GCC_VER)/thumb/v7-a+fp/hard
+endif
+ifeq ($(wildcard $(GCC_LIBGCC_DIR)/libgcc.a),)
+  GCC_LIBGCC_DIR := $(gcc_install_dir)/lib/gcc/arm-none-eabi/$(GCC_VER)
+endif
+
+# Find the correct libstdc++ path
+GCC_LIBSTDCPP_DIR := $(gcc_install_dir)/arm-none-eabi/lib/fpu
+ifeq ($(wildcard $(GCC_LIBSTDCPP_DIR)/libstdc++.a),)
+  GCC_LIBSTDCPP_DIR := $(gcc_install_dir)/arm-none-eabi/lib/thumb/v7-a+fp/hard
+endif
+ifeq ($(wildcard $(GCC_LIBSTDCPP_DIR)/libstdc++.a),)
+  GCC_LIBSTDCPP_DIR := $(gcc_install_dir)/arm-none-eabi/lib
+endif
+
 # Use the C system libraries shipped with BIOS (not the toolchain).
 sysbios_cflags = @$(sysbios_build_dir)/compiler.opt
 sysbios_lflags = -nostartfiles -static \
 	-Wl,-T,$(sysbios_build_dir)/linker.cmd \
 	-L$(bios_install_dir)/gnu/targets/arm/libs/install-native/arm-none-eabi/lib/fpu \
-	-L$(gcc_install_dir)/lib/gcc/arm-none-eabi/4.9.3/fpu -lgcc \
-	-L$(gcc_install_dir)/arm-none-eabi/lib/fpu -lstdc++
+	-L$(GCC_LIBGCC_DIR) -lgcc \
+	-L$(GCC_LIBSTDCPP_DIR) -lstdc++
 
 # Set compiler tools
 CC := $(gcc_install_dir)/bin/arm-none-eabi-gcc -fdiagnostics-color -fmax-errors=5
